@@ -5,141 +5,280 @@ scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(
 75,
-window.innerWidth/window.innerHeight,
+window.innerWidth / window.innerHeight,
 0.1,
 1000
 );
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
+const renderer = new THREE.WebGLRenderer({
+antialias:true
+});
+
+renderer.setSize(
+window.innerWidth,
+window.innerHeight
+);
+
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// Light
+// Lights
 const sun = new THREE.DirectionalLight(0xffffff,2);
 sun.position.set(10,20,10);
-sun.castShadow=true;
+sun.castShadow = true;
 scene.add(sun);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.6));
+scene.add(
+new THREE.AmbientLight(0xffffff,0.6)
+);
 
 // Road
 const road = new THREE.Mesh(
-new THREE.BoxGeometry(20,1,500),
-new THREE.MeshStandardMaterial({color:0x333333})
+new THREE.BoxGeometry(20,1,1000),
+new THREE.MeshStandardMaterial({
+color:0x333333
+})
 );
-road.receiveShadow=true;
+
+road.receiveShadow = true;
 scene.add(road);
 
 // Player Car
 const car = new THREE.Mesh(
 new THREE.BoxGeometry(2,1,4),
-new THREE.MeshStandardMaterial({color:"red"})
+new THREE.MeshStandardMaterial({
+color:"red"
+})
 );
 
-car.position.y=1;
-car.castShadow=true;
+car.position.y = 1;
+car.castShadow = true;
 scene.add(car);
 
 // Obstacles
-const obstacles=[];
+const obstacles = [];
 
-for(let i=0;i<20;i++){
+for(let i=0;i<30;i++){
 
-const obs=new THREE.Mesh(
+const obs = new THREE.Mesh(
 new THREE.BoxGeometry(2,2,2),
-new THREE.MeshStandardMaterial({color:"yellow"})
+new THREE.MeshStandardMaterial({
+color:"yellow"
+})
 );
 
 obs.position.set(
 (Math.random()*14)-7,
 1,
--i*25-50
+-i*30-50
 );
 
 scene.add(obs);
 obstacles.push(obs);
+
 }
 
 camera.position.set(0,5,10);
 
-let speed=0;
-let score=0;
-let gameOver=false;
+// Game Variables
+let speed = 0;
+let score = 0;
+let gameOver = false;
 
-const keys={};
+// Keyboard
+const keys = {};
 
-window.addEventListener("keydown",e=>{
-keys[e.key]=true;
+window.addEventListener("keydown",(e)=>{
+keys[e.key] = true;
 });
 
-window.addEventListener("keyup",e=>{
-keys[e.key]=false;
+window.addEventListener("keyup",(e)=>{
+keys[e.key] = false;
 });
 
-document.getElementById("reset").onclick=()=>{
+// Mobile Controls
+let moveLeft = false;
+let moveRight = false;
+let nitroMobile = false;
+
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+const nitroBtn = document.getElementById("nitroBtn");
+
+if(leftBtn){
+
+leftBtn.addEventListener("touchstart",()=>{
+moveLeft = true;
+});
+
+leftBtn.addEventListener("touchend",()=>{
+moveLeft = false;
+});
+
+}
+
+if(rightBtn){
+
+rightBtn.addEventListener("touchstart",()=>{
+moveRight = true;
+});
+
+rightBtn.addEventListener("touchend",()=>{
+moveRight = false;
+});
+
+}
+
+if(nitroBtn){
+
+nitroBtn.addEventListener("touchstart",()=>{
+nitroMobile = true;
+});
+
+nitroBtn.addEventListener("touchend",()=>{
+nitroMobile = false;
+});
+
+}
+
+// Reset Button
+const resetBtn =
+document.getElementById("reset");
+
+if(resetBtn){
+
+resetBtn.onclick = ()=>{
 location.reload();
 };
 
+}
+
+// Collision Function
 function checkCollision(a,b){
 
-return (
+return(
 Math.abs(a.position.x-b.position.x)<2 &&
 Math.abs(a.position.z-b.position.z)<3
 );
 
 }
 
+// Animation Loop
 function animate(){
 
 requestAnimationFrame(animate);
 
 if(gameOver){
+
 renderer.render(scene,camera);
 return;
+
 }
 
-if(keys["ArrowUp"]) speed+=0.001;
-if(keys["ArrowDown"]) speed-=0.001;
+// Keyboard Driving
+if(keys["ArrowUp"])
+speed += 0.001;
 
-speed=Math.max(0,Math.min(speed,0.5));
+if(keys["ArrowDown"])
+speed -= 0.001;
 
-if(keys["ArrowLeft"]) car.position.x-=0.15;
-if(keys["ArrowRight"]) car.position.x+=0.15;
+if(keys["Shift"])
+speed += 0.003;
 
-car.position.x=Math.max(-8,Math.min(8,car.position.x));
+// Mobile Driving
+if(moveLeft)
+car.position.x -= 0.15;
 
-car.position.z-=speed*5;
+if(moveRight)
+car.position.x += 0.15;
 
-camera.position.z=car.position.z+10;
-camera.position.x=car.position.x;
+if(nitroMobile)
+speed += 0.003;
+
+// Keyboard Steering
+if(keys["ArrowLeft"])
+car.position.x -= 0.15;
+
+if(keys["ArrowRight"])
+car.position.x += 0.15;
+
+// Speed Limits
+speed = Math.max(
+0,
+Math.min(speed,0.5)
+);
+
+// Road Limits
+car.position.x = Math.max(
+-8,
+Math.min(8,car.position.x)
+);
+
+// Move Car
+car.position.z -= speed*5;
+
+// Camera Follow
+camera.position.z =
+car.position.z + 10;
+
+camera.position.x =
+car.position.x;
+
 camera.lookAt(car.position);
 
-score+=speed*10;
+// Score
+score += speed*10;
 
-document.getElementById("score").textContent=
+const scoreEl =
+document.getElementById("score");
+
+if(scoreEl){
+scoreEl.textContent =
 Math.floor(score);
+}
 
-document.getElementById("speed").textContent=
+const speedEl =
+document.getElementById("speed");
+
+if(speedEl){
+speedEl.textContent =
 Math.floor(speed*300);
+}
 
+// Obstacle Check
 for(const obs of obstacles){
 
 if(checkCollision(car,obs)){
-gameOver=true;
-alert("Game Over! Score: "+Math.floor(score));
-}
+
+gameOver = true;
+
+alert(
+"Game Over!\nScore: "+
+Math.floor(score)
+);
+
 }
 
-renderer.render(scene,camera);
+}
+
+// Render
+renderer.render(
+scene,
+camera
+);
+
 }
 
 animate();
 
-window.addEventListener("resize",()=>{
+// Resize
+window.addEventListener(
+"resize",
+()=>{
 
-camera.aspect=
-window.innerWidth/window.innerHeight;
+camera.aspect =
+window.innerWidth/
+window.innerHeight;
 
 camera.updateProjectionMatrix();
 
@@ -148,4 +287,5 @@ window.innerWidth,
 window.innerHeight
 );
 
-});
+}
+);
