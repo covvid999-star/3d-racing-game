@@ -22,3 +22,22 @@ padding:8px 15px;
 margin-top:10px;
 cursor:pointer;
 }
+
+#mobileControls{
+position:fixed;
+bottom:20px;
+width:100%;
+display:flex;
+justify-content:center;
+gap:20px;
+z-index:999;
+}
+
+#mobileControls button{
+width:70px;
+height:70px;
+font-size:30px;
+border:none;
+border-radius:50%;
+background:rgba(255,255,255,0.7);
+}
